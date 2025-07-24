@@ -4,73 +4,77 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Canadian Trail</title>
-<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
- body { font-family: 'VT323', monospace; }
+ body { font-family: 'Nunito', sans-serif; background: linear-gradient(to bottom, #fef3c7, #e0f2fe, #d1fae5); }
  .progress-bar { height: 1rem; }
+ .progress-bar div { transition: width 0.5s ease; }
 </style>
 </head>
-<body class="bg-sky-50 min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between text-gray-800">
+<header class="text-center py-6">
+  <h1 class="text-5xl font-extrabold text-red-600 drop-shadow-sm">🍁 The Maple Trail</h1>
+</header>
 <div id="game" class="container mx-auto p-4 space-y-4">
   <div class="space-y-2">
     <div>
-      <span>Distance</span>
-      <div class="w-full bg-gray-200 rounded-full progress-bar">
-        <div id="distanceBar" class="bg-green-500 h-full rounded-full" style="width:0%"></div>
+      <span class="font-bold">Distance</span>
+      <div class="w-full bg-gray-200 rounded-full shadow-inner progress-bar">
+        <div id="distanceBar" class="h-full rounded-full bg-gradient-to-r from-lime-400 to-green-600" style="width:0%"></div>
       </div>
     </div>
     <div>
-      <span>Snacks</span>
-      <div class="w-full bg-gray-200 rounded-full progress-bar">
-        <div id="snacksBar" class="bg-yellow-500 h-full rounded-full" style="width:100%"></div>
+      <span class="font-bold">Snacks</span>
+      <div class="w-full bg-gray-200 rounded-full shadow-inner progress-bar">
+        <div id="snacksBar" class="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-600" style="width:100%"></div>
       </div>
     </div>
     <div>
-      <span>Morale</span>
-      <div class="w-full bg-gray-200 rounded-full progress-bar">
-        <div id="moraleBar" class="bg-blue-500 h-full rounded-full" style="width:100%"></div>
+      <span class="font-bold">Morale</span>
+      <div class="w-full bg-gray-200 rounded-full shadow-inner progress-bar">
+        <div id="moraleBar" class="h-full rounded-full bg-gradient-to-r from-blue-300 to-indigo-600" style="width:100%"></div>
       </div>
     </div>
   </div>
 
   <div class="flex space-x-4">
-    <img id="eventImg" src="https://placehold.co/300x200" alt="Event" class="w-1/2 rounded shadow">
-    <div id="log" class="w-1/2 bg-white p-4 rounded shadow h-48 overflow-y-auto">Welcome to The Canadian Trail!</div>
+    <img id="eventImg" src="https://placehold.co/300x200" alt="Event" class="w-1/2 rounded-lg shadow-lg">
+    <div id="log" class="w-1/2 bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow h-60 overflow-y-auto">Welcome to The Canadian Trail!</div>
   </div>
 
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <button id="travelBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Travel</button>
-    <button id="restBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">Rest</button>
-    <button id="forageBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded">Forage for Poutine</button>
-    <button id="checkBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded">Check Family</button>
+    <button id="travelBtn" class="transition transform active:scale-95 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg shadow">Travel</button>
+    <button id="restBtn" class="transition transform active:scale-95 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg shadow">Rest</button>
+    <button id="forageBtn" class="transition transform active:scale-95 bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg shadow">Forage for Poutine</button>
+    <button id="checkBtn" class="transition transform active:scale-95 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg shadow">Check Family</button>
   </div>
 </div>
 
 <!-- Start Modal -->
-<div id="startModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="bg-white p-6 rounded space-y-4 text-center">
-    <h1 class="text-3xl">The Canadian Trail</h1>
+<div id="startModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity">
+  <div class="bg-white/90 backdrop-blur-sm p-6 rounded-lg space-y-4 text-center shadow-lg">
+    <h1 class="text-3xl font-bold">The Canadian Trail</h1>
     <p>Guide your family to the US border!</p>
-    <button id="startBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Start</button>
+    <button id="startBtn" class="transition transform active:scale-95 animate-bounce bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg shadow">Start</button>
   </div>
 </div>
 
 <!-- Status Modal -->
 <div id="statusModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-  <div class="bg-white p-6 rounded space-y-4">
-    <h2 class="text-2xl">Family Status</h2>
+  <div class="bg-white/90 backdrop-blur-sm p-6 rounded-lg space-y-4 shadow-lg">
+    <h2 class="text-2xl font-bold">Family Status</h2>
     <ul id="familyStatus" class="space-y-1"></ul>
-    <button class="closeStatus bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Close</button>
+    <button class="closeStatus transition transform active:scale-95 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg">Close</button>
   </div>
 </div>
 
 <!-- End Modal -->
 <div id="endModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-  <div class="bg-white p-6 rounded space-y-4 text-center">
-    <h2 id="endTitle" class="text-3xl"></h2>
+  <div class="bg-white/90 backdrop-blur-sm p-6 rounded-lg space-y-4 text-center shadow-lg">
+    <h2 id="endTitle" class="text-3xl font-bold"></h2>
     <p id="endDesc"></p>
-    <button onclick="location.reload()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Play Again</button>
+    <button onclick="location.reload()" class="transition transform active:scale-95 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">Play Again</button>
   </div>
 </div>
 
@@ -130,8 +134,8 @@ const milestoneEvents = {
 // Utility to add messages
 function addLog(msg) {
   const log = document.getElementById('log');
-  log.innerHTML += `<p>${msg}</p>`;
-  log.scrollTop = log.scrollHeight;
+  log.innerHTML += `<p class='mt-1'>${msg}</p>`;
+  log.lastElementChild.scrollIntoView({ behavior: 'smooth' });
 }
 
 function removeItem(item) {
