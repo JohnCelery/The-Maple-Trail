@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Canadian Trail</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+ body { font-family: 'VT323', monospace; }
+ .progress-bar { height: 1rem; }
+</style>
+</head>
+<body class="bg-sky-50 min-h-screen flex flex-col justify-between">
+<div id="game" class="container mx-auto p-4 space-y-4">
+  <div class="space-y-2">
+    <div>
+      <span>Distance</span>
+      <div class="w-full bg-gray-200 rounded-full progress-bar">
+        <div id="distanceBar" class="bg-green-500 h-full rounded-full" style="width:0%"></div>
+      </div>
+    </div>
+    <div>
+      <span>Snacks</span>
+      <div class="w-full bg-gray-200 rounded-full progress-bar">
+        <div id="snacksBar" class="bg-yellow-500 h-full rounded-full" style="width:100%"></div>
+      </div>
+    </div>
+    <div>
+      <span>Morale</span>
+      <div class="w-full bg-gray-200 rounded-full progress-bar">
+        <div id="moraleBar" class="bg-blue-500 h-full rounded-full" style="width:100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex space-x-4">
+    <img id="eventImg" src="https://placehold.co/300x200" alt="Event" class="w-1/2 rounded shadow">
+    <div id="log" class="w-1/2 bg-white p-4 rounded shadow h-48 overflow-y-auto">Welcome to The Canadian Trail!</div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <button id="travelBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Travel</button>
+    <button id="restBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">Rest</button>
+    <button id="forageBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded">Forage for Poutine</button>
+    <button id="checkBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded">Check Family</button>
+  </div>
+</div>
+
+<!-- Start Modal -->
+<div id="startModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded space-y-4 text-center">
+    <h1 class="text-3xl">The Canadian Trail</h1>
+    <p>Guide your family to the US border!</p>
+    <button id="startBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Start</button>
+  </div>
+</div>
+
+<!-- Status Modal -->
+<div id="statusModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white p-6 rounded space-y-4">
+    <h2 class="text-2xl">Family Status</h2>
+    <ul id="familyStatus" class="space-y-1"></ul>
+    <button class="closeStatus bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Close</button>
+  </div>
+</div>
+
+<!-- End Modal -->
+<div id="endModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white p-6 rounded space-y-4 text-center">
+    <h2 id="endTitle" class="text-3xl"></h2>
+    <p id="endDesc"></p>
+    <button onclick="location.reload()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Play Again</button>
+  </div>
+</div>
+
+<script>
+// Global game state
+const gameState = {
+  distanceTraveled: 0,
+  distanceToGoal: 2500,
+  snacks: 100,
+  morale: 100,
+  family: [
+    { name: 'Mike', status: 'healthy' },
+    { name: 'Merri-Ellen', status: 'healthy' },
+    { name: 'Ros', status: 'healthy' },
+    { name: 'Jessica', status: 'healthy' },
+    { name: 'Martha', status: 'healthy' },
+    { name: 'Rusty', status: 'healthy' }
+  ],
+  inventory: [],
+  milestones: [750, 1500]
+};
+
+// Sample random events
+const events = [
+  {
+    desc: 'You encounter a friendly moose who offers guidance.',
+    img: 'https://placehold.co/300x200',
+    choices: [
+      { text: 'Thank the moose and continue', action: () => addLog('The moose nods and you travel further.'), after: travel },
+      { text: 'Ask for snacks', action: () => { addLog('The moose shares snacks.'); gameState.snacks += 10; } }
+    ]
+  },
+  {
+    desc: 'Flat tire! You need a spare.',
+    img: 'https://placehold.co/300x200',
+    choices: [
+      { text: 'Use Spare Tire', requires: 'Spare Tire', action: () => { addLog('You replace the tire.'); removeItem('Spare Tire'); } },
+      { text: 'Wait for help', action: () => { addLog('Waiting wastes snacks.'); gameState.snacks -= 10; } }
+    ]
+  },
+  {
+    desc: 'You find an abandoned trunk.',
+    img: 'https://placehold.co/300x200',
+    choices: [
+      { text: 'Open it', action: () => { addLog('You found a Spare Tire!'); gameState.inventory.push('Spare Tire'); } },
+      { text: 'Ignore it', action: () => addLog('You move on.') }
+    ]
+  }
+];
+
+// Milestone events
+const milestoneEvents = {
+  750: { desc: 'You reached Toronto! The city boosts morale.', img: 'https://placehold.co/300x200', effect: () => gameState.morale += 20 },
+  1500: { desc: 'You pass through Ottawa and stock up on snacks.', img: 'https://placehold.co/300x200', effect: () => gameState.snacks += 20 }
+};
+
+// Utility to add messages
+function addLog(msg) {
+  const log = document.getElementById('log');
+  log.innerHTML += `<p>${msg}</p>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function removeItem(item) {
+  const idx = gameState.inventory.indexOf(item);
+  if (idx >= 0) gameState.inventory.splice(idx, 1);
+}
+
+// Game actions
+function travel() {
+  const dist = Math.floor(Math.random() * 150) + 50; // travel 50-200 km
+  gameState.distanceTraveled += dist;
+  gameState.snacks -= 5;
+  addLog(`You travel ${dist} km.`);
+  if (Math.random() < 0.7) triggerEvent();
+  checkMilestones();
+  checkEnd();
+  updateUI();
+}
+
+function rest() {
+  const gain = Math.floor(Math.random() * 15) + 5;
+  gameState.morale = Math.min(gameState.morale + gain, 100);
+  gameState.snacks -= 5;
+  addLog('You rest and feel refreshed.');
+  checkEnd();
+  updateUI();
+}
+
+function forage() {
+  if (Math.random() < 0.5) {
+    const found = Math.floor(Math.random() * 15) + 5;
+    gameState.snacks = Math.min(gameState.snacks + found, 100);
+    addLog(`You found ${found} snacks!`);
+  } else {
+    gameState.morale -= 10;
+    addLog('No luck finding food. Spirits drop.');
+  }
+  checkEnd();
+  updateUI();
+}
+
+// Random event
+function triggerEvent() {
+  const evt = events[Math.floor(Math.random() * events.length)];
+  showEvent(evt);
+}
+
+function showEvent(evt) {
+  const log = document.getElementById('log');
+  document.getElementById('eventImg').src = evt.img;
+  log.innerHTML += `<p class='font-bold'>${evt.desc}</p>`;
+  evt.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.textContent = choice.text;
+    btn.className = 'm-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 rounded';
+    if (choice.requires && !gameState.inventory.includes(choice.requires)) {
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+    }
+    btn.onclick = () => {
+      choice.action();
+      updateUI();
+    };
+    log.appendChild(btn);
+  });
+}
+
+function checkMilestones() {
+  gameState.milestones.forEach(m => {
+    if (gameState.distanceTraveled >= m && m in milestoneEvents) {
+      const ev = milestoneEvents[m];
+      addLog(`<strong>Milestone:</strong> ${ev.desc}`);
+      document.getElementById('eventImg').src = ev.img;
+      ev.effect();
+      delete milestoneEvents[m];
+    }
+  });
+}
+
+function checkEnd() {
+  if (gameState.snacks <= 0 || gameState.morale <= 0) {
+    showEnd('You Lose', 'Your journey ends as resources run out.');
+  }
+  if (gameState.distanceTraveled >= gameState.distanceToGoal) {
+    showEnd('You Win!', 'You reached the US border!');
+  }
+}
+
+function showEnd(title, desc) {
+  document.getElementById('endTitle').textContent = title;
+  document.getElementById('endDesc').textContent = desc;
+  document.getElementById('endModal').classList.remove('hidden');
+}
+
+// Update all UI based on gameState
+function updateUI() {
+  document.getElementById('distanceBar').style.width = `${gameState.distanceTraveled / gameState.distanceToGoal * 100}%`;
+  document.getElementById('snacksBar').style.width = `${gameState.snacks}%`;
+  document.getElementById('moraleBar').style.width = `${gameState.morale}%`;
+}
+
+// Display family statuses
+function showStatus() {
+  const ul = document.getElementById('familyStatus');
+  ul.innerHTML = '';
+  gameState.family.forEach(member => {
+    const li = document.createElement('li');
+    li.textContent = `${member.name}: ${member.status}`;
+    ul.appendChild(li);
+  });
+  document.getElementById('statusModal').classList.remove('hidden');
+}
+
+// Event listeners
+document.getElementById('startBtn').onclick = () => {
+  document.getElementById('startModal').style.display = 'none';
+  updateUI();
+};
+
+document.getElementById('travelBtn').onclick = travel;
+document.getElementById('restBtn').onclick = rest;
+document.getElementById('forageBtn').onclick = forage;
+document.getElementById('checkBtn').onclick = showStatus;
+document.querySelectorAll('.closeStatus').forEach(btn => btn.onclick = () => document.getElementById('statusModal').classList.add('hidden'));
+</script>
+</body>
+</html>
